@@ -142,16 +142,30 @@
             display: none;
         }
     </style>
+    <script>
+        // Check URL params immediately on page load, before DOM is fully loaded
+        (function() {
+            if (window.location.search.includes('urls=')) {
+                document.documentElement.style.backgroundColor = '#f5f7fa';
+                document.documentElement.style.visibility = 'hidden';
+                
+                // Will make the loading screen visible and content hidden in the DOMContentLoaded event
+                window.showLoadingScreen = true;
+            } else {
+                window.showLoadingScreen = false;
+            }
+        })();
+    </script>
 </head>
 <body>
     <!-- Loading Screen -->
-    <div id="loadingScreen" style="display: none;">
+    <div id="loadingScreen">
         <div class="spinner"></div>
-        <p>Redirecting you to the page...</p>
+        <p>Du wirst weitergeleitet...</p>
     </div>
 
     <!-- Main Content -->
-    <div id="mainContent">
+    <div id="mainContent" style="display: none;">
         <div class="container">
             <h1>Link Randomizer</h1>
             <p>Paste multiple URLs below, one per line. We'll create a single link that randomly redirects to one of them.</p>
@@ -185,12 +199,24 @@
             const loadingScreen = document.getElementById('loadingScreen');
             const mainContent = document.getElementById('mainContent');
             
+            // Reset visibility that was hidden in the early check
+            if (window.showLoadingScreen) {
+                document.documentElement.style.visibility = 'visible';
+                mainContent.style.display = 'none';
+                loadingScreen.style.display = 'flex';
+            } else {
+                loadingScreen.style.display = 'none';
+                mainContent.style.display = 'block';
+            }
+            
             // Check if we should redirect (if URL params exist)
             const urlParams = new URLSearchParams(window.location.search);
             const urlsParam = urlParams.get('urls');
             
             if (urlsParam) {
-                // Show loading screen immediately
+                // Hide main content and show loading screen immediately
+                document.body.style.backgroundColor = '#f5f7fa';
+                mainContent.style.display = 'none';
                 loadingScreen.style.display = 'flex';
                 
                 try {
@@ -214,6 +240,7 @@
                 }
             } else {
                 // If no URL params, show the main content
+                loadingScreen.style.display = 'none';
                 mainContent.style.display = 'block';
             }
             
