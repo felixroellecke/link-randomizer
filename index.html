@@ -181,17 +181,13 @@
                     alert(`${invalidCount} invalid URL(s) were removed. Please check your input.`);
                 }
                 
-                // Create a TinyURL using their API
-                const tinyurlApiUrl = 'https://tinyurl.com/api-create.php?url=';
-                
                 // Create a URL that points to our redirect service
-                const bitlyFallbackUrl = "https://bitly.com/";
-                
-                // Create a param string with all URLs
                 const urlParam = encodeURIComponent(validUrls.join('|'));
-                const redirectUrl = `https://redir.is/?urls=${urlParam}`;
                 
-                // Use https://redir.is/ service
+                // Create our own redirect URL that points back to this page
+                const baseUrl = window.location.href.split('?')[0];
+                const redirectUrl = `${baseUrl}?urls=${urlParam}`;
+                
                 // Display the result
                 randomUrlInput.value = redirectUrl;
                 urlCountElement.textContent = `URLs added: ${validUrls.length}`;
@@ -228,7 +224,7 @@
             
             if (urlsParam) {
                 try {
-                    const urls = urlsParam.split('|').map(url => decodeURIComponent(url));
+                    const urls = urlsParam.split('|');
                     
                     if (urls.length > 0) {
                         // Pick a random URL from the list
@@ -236,7 +232,8 @@
                         const randomUrl = urls[randomIndex];
                         
                         // Redirect to the random URL
-                        window.location.href = randomUrl;
+                        console.log("Redirecting to:", randomUrl);
+                        window.location.replace(randomUrl);
                     }
                 } catch (e) {
                     console.error('Error parsing URLs parameter:', e);
