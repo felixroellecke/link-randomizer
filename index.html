@@ -108,26 +108,68 @@
             font-size: 14px;
             color: #7f8c8d;
         }
+
+        /* Loading screen styles */
+        #loadingScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #f5f7fa;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: #3498db;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        #mainContent {
+            display: none;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Link Randomizer</h1>
-        <p>Paste multiple URLs below, one per line. We'll create a single link that randomly redirects to one of them.</p>
-        
-        <div class="input-section">
-            <textarea id="urlList" placeholder="Paste your URLs here, one per line..."></textarea>
-            <button id="generateBtn">Generate Random Link</button>
-        </div>
-        
-        <div class="result-section" id="resultSection" style="display: none;">
-            <h2>Your Random Link:</h2>
-            <div class="url-display">
-                <input type="text" id="randomUrl" readonly>
-                <button id="copyBtn">Copy</button>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" style="display: none;">
+        <div class="spinner"></div>
+        <p>Redirecting you to the page...</p>
+    </div>
+
+    <!-- Main Content -->
+    <div id="mainContent">
+        <div class="container">
+            <h1>Link Randomizer</h1>
+            <p>Paste multiple URLs below, one per line. We'll create a single link that randomly redirects to one of them.</p>
+            
+            <div class="input-section">
+                <textarea id="urlList" placeholder="Paste your URLs here, one per line..."></textarea>
+                <button id="generateBtn">Generate Random Link</button>
             </div>
-            <div class="url-stats">
-                <p id="urlCount">URLs added: 0</p>
+            
+            <div class="result-section" id="resultSection" style="display: none;">
+                <h2>Your Random Link:</h2>
+                <div class="url-display">
+                    <input type="text" id="randomUrl" readonly>
+                    <button id="copyBtn">Copy</button>
+                </div>
+                <div class="url-stats">
+                    <p id="urlCount">URLs added: 0</p>
+                </div>
             </div>
         </div>
     </div>
@@ -140,6 +182,40 @@
             const randomUrlInput = document.getElementById('randomUrl');
             const copyBtn = document.getElementById('copyBtn');
             const urlCountElement = document.getElementById('urlCount');
+            const loadingScreen = document.getElementById('loadingScreen');
+            const mainContent = document.getElementById('mainContent');
+            
+            // Check if we should redirect (if URL params exist)
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlsParam = urlParams.get('urls');
+            
+            if (urlsParam) {
+                // Show loading screen immediately
+                loadingScreen.style.display = 'flex';
+                
+                try {
+                    const urls = urlsParam.split('|');
+                    
+                    if (urls.length > 0) {
+                        // Pick a random URL from the list
+                        const randomIndex = Math.floor(Math.random() * urls.length);
+                        const randomUrl = urls[randomIndex];
+                        
+                        // Redirect after a short delay to show the loading animation
+                        setTimeout(() => {
+                            window.location.replace(randomUrl);
+                        }, 1500);
+                    }
+                } catch (e) {
+                    console.error('Error parsing URLs parameter:', e);
+                    // If there's an error, show the main content
+                    loadingScreen.style.display = 'none';
+                    mainContent.style.display = 'block';
+                }
+            } else {
+                // If no URL params, show the main content
+                mainContent.style.display = 'block';
+            }
             
             // Generate random link when button is clicked
             generateBtn.addEventListener('click', () => {
@@ -192,17 +268,6 @@
                 randomUrlInput.value = redirectUrl;
                 urlCountElement.textContent = `URLs added: ${validUrls.length}`;
                 resultSection.style.display = 'block';
-                
-                // Note: You can also use the tinyurl API to make the link shorter:
-                // fetch(`${tinyurlApiUrl}${encodeURIComponent(redirectUrl)}`)
-                //     .then(response => response.text())
-                //     .then(shortUrl => {
-                //         randomUrlInput.value = shortUrl;
-                //     })
-                //     .catch(error => {
-                //         console.error('Error creating short URL:', error);
-                //         randomUrlInput.value = redirectUrl;
-                //     });
             });
             
             // Copy link to clipboard
@@ -217,28 +282,6 @@
                     copyBtn.textContent = originalText;
                 }, 2000);
             });
-            
-            // Check if we should redirect (if URL params exist)
-            const urlParams = new URLSearchParams(window.location.search);
-            const urlsParam = urlParams.get('urls');
-            
-            if (urlsParam) {
-                try {
-                    const urls = urlsParam.split('|');
-                    
-                    if (urls.length > 0) {
-                        // Pick a random URL from the list
-                        const randomIndex = Math.floor(Math.random() * urls.length);
-                        const randomUrl = urls[randomIndex];
-                        
-                        // Redirect to the random URL
-                        console.log("Redirecting to:", randomUrl);
-                        window.location.replace(randomUrl);
-                    }
-                } catch (e) {
-                    console.error('Error parsing URLs parameter:', e);
-                }
-            }
         });
     </script>
 </body>
