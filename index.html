@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link Randomizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        p {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            resize: vertical;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        #generateBtn {
+            display: block;
+            width: 100%;
+            font-weight: bold;
+        }
+
+        .result-section {
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .url-display {
+            display: flex;
+            margin-bottom: 15px;
+        }
+
+        #randomUrl {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px 0 0 5px;
+            font-size: 14px;
+        }
+
+        #copyBtn {
+            border-radius: 0 5px 5px 0;
+        }
+
+        .url-stats {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Link Randomizer</h1>
+        <p>Paste multiple URLs below, one per line. We'll create a single link that randomly redirects to one of them.</p>
+        
+        <div class="input-section">
+            <textarea id="urlList" placeholder="Paste your URLs here, one per line..."></textarea>
+            <button id="generateBtn">Generate Random Link</button>
+        </div>
+        
+        <div class="result-section" id="resultSection" style="display: none;">
+            <h2>Your Random Link:</h2>
+            <div class="url-display">
+                <input type="text" id="randomUrl" readonly>
+                <button id="copyBtn">Copy</button>
+            </div>
+            <div class="url-stats">
+                <p id="urlCount">URLs added: 0</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlListTextarea = document.getElementById('urlList');
+            const generateBtn = document.getElementById('generateBtn');
+            const resultSection = document.getElementById('resultSection');
+            const randomUrlInput = document.getElementById('randomUrl');
+            const copyBtn = document.getElementById('copyBtn');
+            const urlCountElement = document.getElementById('urlCount');
+            
+            // Generate random link when button is clicked
+            generateBtn.addEventListener('click', () => {
+                // Get the URLs from the textarea
+                const urlsText = urlListTextarea.value.trim();
+                
+                if (!urlsText) {
+                    alert('Please enter at least one URL');
+                    return;
+                }
+                
+                // Split by newline and filter out empty lines
+                const urls = urlsText.split('\n')
+                    .map(url => url.trim())
+                    .filter(url => url !== '');
+                
+                if (urls.length === 0) {
+                    alert('Please enter at least one valid URL');
+                    return;
+                }
+                
+                // Validate URLs
+                const validUrls = urls.filter(url => {
+                    try {
+                        new URL(url);
+                        return true;
+                    } catch (e) {
+                        return false;
+                    }
+                });
+                
+                if (validUrls.length === 0) {
+                    alert('None of the entered URLs are valid. Please check your input.');
+                    return;
+                }
+                
+                if (validUrls.length !== urls.length) {
+                    const invalidCount = urls.length - validUrls.length;
+                    alert(`${invalidCount} invalid URL(s) were removed. Please check your input.`);
+                }
+                
+                // Create a TinyURL using their API
+                const tinyurlApiUrl = 'https://tinyurl.com/api-create.php?url=';
+                
+                // Create a URL that points to our redirect service
+                const bitlyFallbackUrl = "https://bitly.com/";
+                
+                // Create a param string with all URLs
+                const urlParam = encodeURIComponent(validUrls.join('|'));
+                const redirectUrl = `https://redir.is/?urls=${urlParam}`;
+                
+                // Use https://redir.is/ service
+                // Display the result
+                randomUrlInput.value = redirectUrl;
+                urlCountElement.textContent = `URLs added: ${validUrls.length}`;
+                resultSection.style.display = 'block';
+                
+                // Note: You can also use the tinyurl API to make the link shorter:
+                // fetch(`${tinyurlApiUrl}${encodeURIComponent(redirectUrl)}`)
+                //     .then(response => response.text())
+                //     .then(shortUrl => {
+                //         randomUrlInput.value = shortUrl;
+                //     })
+                //     .catch(error => {
+                //         console.error('Error creating short URL:', error);
+                //         randomUrlInput.value = redirectUrl;
+                //     });
+            });
+            
+            // Copy link to clipboard
+            copyBtn.addEventListener('click', () => {
+                randomUrlInput.select();
+                document.execCommand('copy');
+                
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = 'Copied!';
+                
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                }, 2000);
+            });
+            
+            // Check if we should redirect (if URL params exist)
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlsParam = urlParams.get('urls');
+            
+            if (urlsParam) {
+                try {
+                    const urls = urlsParam.split('|').map(url => decodeURIComponent(url));
+                    
+                    if (urls.length > 0) {
+                        // Pick a random URL from the list
+                        const randomIndex = Math.floor(Math.random() * urls.length);
+                        const randomUrl = urls[randomIndex];
+                        
+                        // Redirect to the random URL
+                        window.location.href = randomUrl;
+                    }
+                } catch (e) {
+                    console.error('Error parsing URLs parameter:', e);
+                }
+            }
+        });
+    </script>
+</body>
+</html> 
